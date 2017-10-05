@@ -14,6 +14,7 @@ package tabwriter
 import (
 	"bytes"
 	"io"
+	"regexp"
 	"unicode/utf8"
 )
 
@@ -293,9 +294,6 @@ func (b *Writer) writeLines(pos0 int, line0, line1 int) (pos int) {
 			} else {
 				// non-empty cell
 
-				cesc := regexp.MustCompile(`\x1b\[\d+(;\d+)*m`);
-				//fmt.Println(cesc.MatchString(cp("1234")))
-				//fmt.Println(cesc.ReplaceAllString(cp("1234"), "-"))
 				useTabs = false
 				if b.flags&AlignRight == 0 { // align left
 					b.write0(b.buf.Bytes()[pos : pos+c.size])
@@ -397,7 +395,10 @@ func (b *Writer) append(text []byte) {
 
 // Update the cell width.
 func (b *Writer) updateWidth() {
-	b.cell.width += utf8.RuneCount(b.buf.Bytes()[b.pos:b.buf.Len()])
+	cesc := regexp.MustCompile(`\x1b\[\d+(;\d+)*m`)
+	tempStr := b.buf.Bytes()[b.pos:b.buf.Len()]
+
+	b.cell.width += utf8.RuneCount(cesc.ReplaceAll(tempStr, []byte("")))
 	b.pos = b.buf.Len()
 }
 
